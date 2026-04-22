@@ -29,6 +29,11 @@ type DriverDashboardProps = {
 
 type ActionState = "idle" | "loading" | "success" | "error";
 
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message.trim()) return error.message;
+  return fallback;
+}
+
 export function DriverDashboard({ affiliationCode = "", initialReferralCode = "" }: DriverDashboardProps) {
   const [state, setState] = useState<LoadState>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -73,12 +78,12 @@ export function DriverDashboard({ affiliationCode = "", initialReferralCode = ""
 
         const [dashboardResponse, affiliationResponse, referralsResponse] = await Promise.all([
           getDriverDashboard(accessToken),
-          getDriverAffiliation(accessToken).catch((err: any) => {
-            setAffiliationError(err?.message ?? "Affiliation indisponible.");
+          getDriverAffiliation(accessToken).catch((error: unknown) => {
+            setAffiliationError(getErrorMessage(error, "Affiliation indisponible."));
             return { success: false, data: null };
           }),
-          getDriverReferralsSummary(accessToken).catch((err: any) => {
-            setReferralsError(err?.message ?? "Filleuls indisponibles.");
+          getDriverReferralsSummary(accessToken).catch((error: unknown) => {
+            setReferralsError(getErrorMessage(error, "Filleuls indisponibles."));
             return { success: false, data: { invitationCount: 0, referredDrivers: [] } };
           }),
         ]);
@@ -89,9 +94,9 @@ export function DriverDashboard({ affiliationCode = "", initialReferralCode = ""
         setAffiliation(affiliationResponse.data ?? null);
         setReferralsSummary(referralsResponse.data);
         setState("success");
-      } catch (err: any) {
+      } catch (error: unknown) {
         if (!isActive) return;
-        setError(err?.message ?? "Impossible de charger le tableau de bord.");
+        setError(getErrorMessage(error, "Impossible de charger le tableau de bord."));
         setState("error");
       }
     }
@@ -121,9 +126,9 @@ export function DriverDashboard({ affiliationCode = "", initialReferralCode = ""
       .then((response) => {
         setAffiliation(response.data ?? null);
       })
-      .catch((err: any) => {
+      .catch((error: unknown) => {
         setAffiliationState("error");
-        setAffiliationError(err?.message ?? "Affiliation impossible.");
+        setAffiliationError(getErrorMessage(error, "Affiliation impossible."));
       });
   }, [affiliationCode, affiliation, hasAutoApplied]);
 
@@ -163,11 +168,19 @@ export function DriverDashboard({ affiliationCode = "", initialReferralCode = ""
 
   const transactions = (dashboard.recentTransactions ?? []).slice(0, 10);
   const referralCode = storedUser?.referralCode || initialReferralCode;
-  const whatsappCommunityUrl = env.whatsappCommunityUrl || "#";
+  const whatsappCommunityUrl = env.whatsappCommunityUrl;
 
 
   const hasAffiliation = Boolean(affiliation?.organization?.name);
   const referralCount = referralsSummary?.invitationCount ?? 0;
+  const trimmedAffiliationCodeInput = affiliationCodeInput.trim();
+  const isAffiliationPreviewInvalid =
+    trimmedAffiliationCodeInput.length > 0 && preview.valid === false;
+  const isJoinAffiliationDisabled =
+    affiliationState === "loading" ||
+    trimmedAffiliationCodeInput.length === 0 ||
+    preview.loading ||
+    isAffiliationPreviewInvalid;
 
   async function handleApplyAffiliation() {
     const token = window.localStorage.getItem("yely_access_token");
@@ -192,10 +205,11 @@ export function DriverDashboard({ affiliationCode = "", initialReferralCode = ""
       setAffiliationState("success");
       const refreshed = await getDriverAffiliation(token);
       setAffiliation(refreshed.data ?? null);
-    } catch (err: any) {
-      track("affiliation_apply_error", { code: affiliationCodeInput.trim(), message: err?.message ?? "Affiliation impossible." });
+    } catch (error: unknown) {
+      const message = getErrorMessage(error, "Affiliation impossible.");
+      track("affiliation_apply_error", { code: affiliationCodeInput.trim(), message });
       setAffiliationState("error");
-      setAffiliationError(err?.message ?? "Affiliation impossible.");
+      setAffiliationError(message);
     }
   }
 
@@ -327,31 +341,42 @@ export function DriverDashboard({ affiliationCode = "", initialReferralCode = ""
                   className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
                   placeholder="Code Organisation (ex: ORG-123)"
                 />
+                {preview.loading && trimmedAffiliationCodeInput.length > 0 && (
+                  <p className="text-[10px] font-medium text-slate-500">Vérification du code...</p>
+                )}
                 {preview.valid && (
                   <p className="text-[10px] font-bold text-emerald-600 italic">✓ {preview.organization?.name}</p>
                 )}
+                {isAffiliationPreviewInvalid && (
+                  <p className="text-[10px] font-medium text-amber-700">Code d&apos;affiliation invalide.</p>
+                )}
                 <button
                   onClick={handleApplyAffiliation}
-                  disabled={affiliationState === "loading"}
+                  disabled={isJoinAffiliationDisabled}
                   className="w-full rounded-xl bg-slate-900 py-2.5 text-xs font-bold text-white transition hover:bg-slate-800 disabled:opacity-50"
                 >
                   {affiliationState === "loading" ? "Chargement..." : "Rejoindre la flotte"}
                 </button>
+                {affiliationError && (
+                  <p className="text-[10px] font-medium text-red-600">{affiliationError}</p>
+                )}
              </div>
            )}
         </div>
 
         {/* WhatsApp Button */}
-        <a
-          href={whatsappCommunityUrl}
-          target="_blank"
-          rel="noreferrer"
-          onClick={() => track("whatsapp_community_click")}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366] py-4 text-sm font-bold text-white shadow-lg transition-transform hover:scale-[1.02]"
-        >
-          <MessageCircle size={18} />
-          Communauté WhatsApp
-        </a>
+        {whatsappCommunityUrl ? (
+          <a
+            href={whatsappCommunityUrl}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => track("whatsapp_community_click")}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366] py-4 text-sm font-bold text-white shadow-lg transition-transform hover:scale-[1.02]"
+          >
+            <MessageCircle size={18} />
+            Communauté WhatsApp
+          </a>
+        ) : null}
       </div>
     </div>
   </div>

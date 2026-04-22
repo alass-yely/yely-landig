@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { getAffiliationPreview } from "@/lib/api/public";
+import { previewAffiliation } from "@/lib/api/network";
 import type { AffiliationPreviewOrganization } from "@/types/auth";
 
 type AffiliationPreviewState = {
@@ -33,7 +33,7 @@ export function useAffiliationPreview(code: string) {
 
     const timeout = setTimeout(async () => {
       try {
-        const response = await getAffiliationPreview(trimmedCode, { signal: controller.signal });
+        const response = await previewAffiliation(trimmedCode, { signal: controller.signal });
         const organization = "organization" in response.data ? response.data.organization : response.data;
 
         if (!isActive) return;

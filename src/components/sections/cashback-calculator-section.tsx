@@ -7,7 +7,7 @@ import { track } from "@/lib/tracking/events";
 
 export function CashbackCalculator() {
   // Valeurs par défaut (à ajuster selon tes futurs partenariats)
-  const CASHBACK_PER_LITRE = 10; // ex: 10 FCFA par litre
+  const CASHBACK_PER_LITRE = 73.1; // ex: 73.1 FCFA par litre
   const [litres, setLitres] = useState(50);
 
   const monthlyGains = litres * CASHBACK_PER_LITRE * 26; // 26 jours travaillés
@@ -43,8 +43,7 @@ export function CashbackCalculator() {
                 Combien allez-vous <span className="text-[#0f9b58]">récupérer</span> par mois ?
               </h2>
               <p className="mt-4 text-slate-400">
-                Ajustez votre consommation moyenne journalière pour estimer votre cashback mensuel avec YELY.
-              </p>
+                En utilisant tes YELY Points, tu peux gagner des revenus supplémentaires chaque mois </p>
             </div>
 
             <div className="bg-white/5 rounded-3xl p-8 border border-white/10 backdrop-blur-sm">
@@ -55,27 +54,27 @@ export function CashbackCalculator() {
                 </div>
                 <input
                   type="range"
-                  min="10"
-                  max="200"
+                  min="0"
+                  max="50"
                   step="5"
                   value={litres}
                   onChange={handleSliderChange}
                   className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#0f9b58]"
                 />
                 <div className="flex justify-between mt-2 text-[10px] text-slate-500 font-bold uppercase">
-                  <span>10L</span>
-                  <span>100L</span>
-                  <span>200L</span>
+                  <span>00L</span>
+                  <span>25L</span>
+                  <span>50L</span>
                 </div>
               </div>
 
               <div className="pt-6 border-t border-white/10 text-center">
                 <p className="text-slate-400 text-xs uppercase tracking-widest mb-1">Gain estimé par mois</p>
                 <div className="text-4xl font-black text-white">
-                  {monthlyGains.toLocaleString()} <span className="text-[#0f9b58] text-xl">FCFA</span>
+                  {monthlyGains.toLocaleString()} <span className="text-[#0f9b58] text-xl">FCFA*</span>
                 </div>
                 <p className="mt-4 text-[10px] text-slate-500 italic">
-                  *Basé sur une moyenne de 26 jours de service / mois.
+                  * Estimation basée sur une utilisation régulière et des données moyennes. Les montants en FCFA correspondent à un potentiel de revenu lié au réinvestissement des gains. Les résultats réels peuvent varier selon l’activité et la consommation de chaque chauffeur.
                 </p>
               </div>
             </div>

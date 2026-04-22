@@ -14,9 +14,9 @@ export function ReferralSection() {
 
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-base font-bold uppercase tracking-[0.2em] text-[#0f9b58]">Croissance Partagée</h2>
+          <h2 className="text-base font-bold uppercase tracking-[0.2em] text-[#0f9b58]">Parrainage</h2>
           <p className="mt-4 text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
-            Développez le réseau, <span className="text-[#0f9b58]">augmentez vos gains.</span>
+            Inviter vos amis, <span className="text-[#0f9b58]">augmenter vos bonus.</span>
           </p>
         </div>
 
@@ -95,7 +95,7 @@ export function ReferralSection() {
             </div>
             
             <p className="text-slate-400 leading-relaxed mb-8">
-              Partagez votre code unique avec d&apos;autres chauffeurs. Plus votre réseau s&apos;agrandit, plus vous débloquez des paliers de cashback et des bonus exclusifs.
+              Partagez votre code de parrainage avec d&apos;autres chauffeurs. Chaque inscription validée vous rapporte des bonus supplémentaires.
             </p>
 
             <ul className="space-y-4 mb-10">

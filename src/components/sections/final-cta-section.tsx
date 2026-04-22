@@ -1,30 +1,30 @@
 "use client";
 import { motion } from "framer-motion";
-import { Smartphone, Store, ShieldCheck } from "lucide-react";
+import { Smartphone, Store, ShieldCheck, QrCode } from "lucide-react";
 
 export function AppTeasingSection() {
   return (
     <section className="bg-white py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="mb-16 text-center">
-          <h2 className="text-3xl font-extrabold text-slate-900">Un écosystème complet en préparation</h2>
+          <h2 className="text-3xl font-extrabold text-slate-900">Tu es chauffeur ou livreur, YELY c’est :</h2>
           <p className="mt-4 text-lg text-slate-600">Trois interfaces conçues pour une transparence totale dès le lancement.</p>
         </div>
 
         <div className="grid gap-8 md:grid-cols-3">
           <TeaserCard 
-            title="App Chauffeur" 
-            desc="Dashboard, QR code unique et suivi du cashback en temps réel."
+            title="Application gratuite" 
+            desc="Sans frais, sans commission, aucun dépôt d’argent nécessaire."
             icon={<Smartphone className="text-[#0f9b58]" />}
           />
           <TeaserCard 
-            title="App Station" 
-            desc="Outil de scan rapide pour valider les transactions et litres servis."
-            icon={<Store className="text-blue-600" />}
+            title="Ton QR code" 
+            desc="Pour scanner à la station."
+            icon={<QrCode className="text-blue-600" />}
           />
           <TeaserCard 
-            title="Espace Organisation" 
-            desc="Gestion de flotte, analytics et optimisation des budgets carburant."
+            title="Des bonus" 
+            desc="Sur chaque litre, versés instantanément."
             icon={<ShieldCheck className="text-slate-700" />}
           />
         </div>

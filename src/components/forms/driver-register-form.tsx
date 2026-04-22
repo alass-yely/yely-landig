@@ -8,6 +8,9 @@ import { useAffiliationPreview } from "@/hooks/use-affiliation-preview";
 import { useReferralPreview } from "@/hooks/use-referral-preview";
 import { registerDriver } from "@/lib/api/auth";
 import { ApiClientError } from "@/lib/api/client";
+import { applyAffiliation } from "@/lib/api/network";
+import { normalizePhone } from "@/lib/utils/phone";
+import { setSessionCookies } from "@/lib/utils/session";
 import { trackEvent } from "@/lib/utils/track";
 import type { RegisterDriverPayload } from "@/types/auth";
 
@@ -24,15 +27,7 @@ type FormState = {
   referralCode: string;
 };
 
-function normalizePhone(phone: string) {
-  const clean = phone.replace(/\D/g, "");
-
-  if (clean.startsWith("225")) {
-    return `+${clean}`;
-  }
-
-  return `+225${clean}`;
-}
+const DRIVER_PIN_REGEX = /^\d{4}$/;
 
 export function DriverRegisterForm({
   initialReferralCode = "",
@@ -49,8 +44,6 @@ export function DriverRegisterForm({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isSuccess, setIsSuccess] = useState(false);
-
   const referralPreview = useReferralPreview(form.referralCode);
   const affiliationPreview = useAffiliationPreview(affiliationCode);
 
@@ -59,7 +52,7 @@ export function DriverRegisterForm({
       form.firstName.trim().length > 0 &&
       form.lastName.trim().length > 0 &&
       form.phone.trim().length > 0 &&
-      form.pin.trim().length >= 4
+      DRIVER_PIN_REGEX.test(form.pin.trim())
     );
   }, [form]);
 
@@ -91,8 +84,8 @@ export function DriverRegisterForm({
       return;
     }
 
-    if (form.pin.trim().length < 4) {
-      setErrorMessage("Le PIN doit contenir au moins 4 caracteres.");
+    if (!DRIVER_PIN_REGEX.test(form.pin.trim())) {
+      setErrorMessage("Le PIN doit contenir exactement 4 chiffres.");
       return;
     }
 
@@ -127,22 +120,32 @@ export function DriverRegisterForm({
         query.set("referralCode", session.user.referralCode);
       }
 
-      if (affiliationCode) {
-        query.set("aff", affiliationCode);
-      }
-
       trackEvent("register_success", {
         userId: session.user.id,
         referralCode: session.user.referralCode,
       });
 
-      setIsSuccess(true);
-      window.dispatchEvent(new Event("storage"));
+      setSessionCookies(session.user.role);
+
+      if (affiliationCode.trim()) {
+        try {
+          await applyAffiliation(session.accessToken, affiliationCode.trim());
+          query.set("affStatus", "success");
+        } catch {
+          query.set("affStatus", "error");
+        }
+
+        query.set("aff", affiliationCode.trim());
+        if (affiliationPreview.organization?.name) {
+          query.set("organizationName", affiliationPreview.organization.name);
+        }
+      }
+
       track("driver_register_success", {
         phone: payload.phone,
         referralCode: session.user.referralCode,
       });
-      router.push(`/chauffeur?${query.toString()}`);
+      router.push(`/success?${query.toString()}`);
     } catch (error) {
       if (error instanceof ApiClientError) {
         setErrorMessage(error.message || "Inscription impossible pour le moment.");
@@ -160,6 +163,8 @@ export function DriverRegisterForm({
     form.referralCode.trim().length > 0 && !referralPreview.loading && referralPreview.valid === false;
   const shouldShowReferralValid = referralPreview.valid && referralPreview.driver;
   const shouldShowAffiliationValid = affiliationPreview.valid && affiliationPreview.organization;
+  const shouldShowAffiliationInvalid =
+    affiliationCode.trim().length > 0 && !affiliationPreview.loading && affiliationPreview.valid === false;
 
     return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -256,6 +261,16 @@ export function DriverRegisterForm({
               <div className="h-5 w-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">i</div>
               Rattaché à l&apos;organisation : {affiliationPreview.organization?.name}
             </div>
+          )}
+
+          {affiliationCode.trim().length > 0 && affiliationPreview.loading && (
+            <p className="text-[11px] font-medium text-slate-500 ml-1">Vérification du code d&apos;affiliation...</p>
+          )}
+
+          {shouldShowAffiliationInvalid && (
+            <p className="text-[11px] font-medium text-amber-700 ml-1">
+              Code d&apos;affiliation invalide. Le compte sera créé, mais le rattachement ne pourra pas être appliqué.
+            </p>
           )}
         </div>
       </div>

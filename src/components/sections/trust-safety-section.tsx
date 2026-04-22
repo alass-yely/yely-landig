@@ -20,11 +20,6 @@ const trustFeatures = [
     desc: "Notre algorithme repère les consommations inhabituelles ou les pleins suspects automatiquement.",
     icon: <SearchCheck size={24} />,
   },
-  {
-    title: "Rapports d'Audit",
-    desc: "Exportez des rapports précis pour votre comptabilité. Fini les reçus papiers perdus ou falsifiés.",
-    icon: <FileBarChart size={24} />,
-  },
 ];
 
 export function TrustSafetySection() {
@@ -39,12 +34,12 @@ export function TrustSafetySection() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-base font-bold uppercase tracking-wider text-slate-500 mb-4">Sécurité & Transparence</h2>
+            <h2 className="text-base font-bold uppercase tracking-wider text-slate-500 mb-4">Propriétaire ou gestionnaire de véhicules </h2> 
             <h3 className="text-3xl font-extrabold text-slate-900 sm:text-4xl leading-tight">
-              Fini le doute sur votre <span className="text-[#0f9b58]">budget carburant.</span>
+              Tu gères plusieurs <span className="text-[#0f9b58]">véhicules?</span> YELY est fait pour toi
             </h3>
             <p className="mt-6 text-lg text-slate-600">
-              YELY agit comme un tiers de confiance entre vous, vos chauffeurs et les stations-service. Chaque goutte de carburant est tracée et certifiée à la source.
+              Avec YELY, gagne de l’argent à chaque fois que tes véhicules prennent du carburant, gratuitement, sans rien gérer et sans changer ton fonctionnement
             </p>
             
             <div className="mt-10 space-y-8">
@@ -125,7 +120,7 @@ export function TrustSafetySection() {
           href="/register?role=organisation"
           className="group flex items-center gap-3 rounded-full border-2 border-slate-900 bg-slate-900 px-10 py-4 text-base font-bold text-white transition-all hover:bg-slate-800 hover:shadow-xl active:scale-95"
         >
-          Inscrire mon organisation
+          Inscrire ma flotte
           <Building2 size={20} className="text-slate-400" />
         </Link>
       </motion.div>

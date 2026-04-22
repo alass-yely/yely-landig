@@ -1,56 +1,69 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Phone, Lock, Loader2, AlertCircle } from "lucide-react";
-
-import { track } from "@/lib/tracking/events";
-import { login } from "@/lib/api/auth";
-import { ApiClientError } from "@/lib/api/client";
-import { trackEvent } from "@/lib/utils/track";
-import type { LoginPayload } from "@/types/auth";
 import { motion, useAnimation } from "framer-motion";
 
-function getRedirectPath(role: string) {
-  if (role === "DRIVER") return "/chauffeur";
-  if (role === "CASHIER" || role === "STATION_MANAGER") return "/organisation";
-  if (role === "YELY_ADMIN") return "/organisation";
-  return "/";
+import { login } from "@/lib/api/auth";
+import { ApiClientError } from "@/lib/api/client";
+import { getPostLoginRedirectPath } from "@/lib/utils/auth-redirect";
+import { normalizePhone } from "@/lib/utils/phone";
+import { setSessionCookies } from "@/lib/utils/session";
+import { trackEvent } from "@/lib/utils/track";
+import type { LoginPayload } from "@/types/auth";
+
+const PIN_REGEX = /^\d{4}$/;
+
+type StoredOrganization = {
+  id: string;
+  name: string;
+  rccm: string;
+  affiliationCode?: string;
+  vehicleCount?: number;
+};
+
+function isStoredOrganization(value: unknown): value is StoredOrganization {
+  if (!value || typeof value !== "object") return false;
+
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate.id === "string" &&
+    typeof candidate.name === "string" &&
+    typeof candidate.rccm === "string"
+  );
+}
+
+function isSafeInternalNextPath(value: string | null): value is string {
+  if (!value) return false;
+  if (!value.startsWith("/")) return false;
+  if (value.startsWith("//")) return false;
+  return true;
 }
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const controls = useAnimation();
-  const [form, setForm] = useState({ phone: "", pin: ""});
+  const [form, setForm] = useState({ phone: "", pin: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const triggerShake = async () => {
     await controls.start({
       x: [-10, 10, -10, 10, 0],
-      transition: { duration: 0.4 }
+      transition: { duration: 0.4 },
     });
   };
 
   const isValid = useMemo(() => {
-    const cleanPhone = form.phone.replace(/\s/g, "");
-    return cleanPhone.length >= 10 && form.pin.trim().length >= 4;
+    const cleanPhone = form.phone.replace(/\D/g, "");
+    return cleanPhone.length === 10 && PIN_REGEX.test(form.pin.trim());
   }, [form]);
-
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErrorMessage(null);
-
-    function normalizePhone(phone: string) {
-      const clean = phone.replace(/\D/g, "");
-
-      if (clean.startsWith("225")) {
-        return `+${clean}`;
-      }
-
-      return `+225${clean}`;
-    }
 
     if (!form.phone.trim()) {
       setErrorMessage("Le telephone est requis.");
@@ -62,8 +75,8 @@ export function LoginForm() {
       return;
     }
 
-    if (form.pin.trim().length < 4) {
-      setErrorMessage("Le PIN doit contenir au moins 4 caracteres.");
+    if (!PIN_REGEX.test(form.pin.trim())) {
+      setErrorMessage("Le PIN doit contenir exactement 4 chiffres.");
       return;
     }
 
@@ -81,9 +94,13 @@ export function LoginForm() {
       localStorage.setItem("yely_access_token", session.accessToken);
       localStorage.setItem("yely_refresh_token", session.refreshToken);
       try {
-      localStorage.setItem("yely_user", JSON.stringify(session.user));
+        localStorage.setItem("yely_user", JSON.stringify(session.user));
+        const maybeOrganization = (session as { organization?: unknown }).organization;
+        if (isStoredOrganization(maybeOrganization)) {
+          localStorage.setItem("yely_organization", JSON.stringify(maybeOrganization));
+        }
       } catch {
-        // Ignore JSON serialization errors for user data
+        // Ignore JSON serialization errors for user data.
       }
 
       trackEvent("login_success", {
@@ -91,16 +108,17 @@ export function LoginForm() {
         role: session.user.role,
       });
 
-      const redirectPath = getRedirectPath(session.user.role);
-      window.dispatchEvent(new Event("storage"));
-      track("driver_login_success", {
-        phone: payload.phone,
-      });
+      setSessionCookies(session.user.role);
+      const nextPath = searchParams.get("next");
+      const redirectPath = isSafeInternalNextPath(nextPath)
+        ? nextPath
+        : getPostLoginRedirectPath(session.user.role);
+
       router.push(redirectPath);
     } catch (error) {
       if (error instanceof ApiClientError) {
         triggerShake();
-        setErrorMessage(error.message || "Identifiants incorrects..");
+        setErrorMessage(error.message || "Identifiants incorrects.");
       } else if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {
@@ -113,52 +131,50 @@ export function LoginForm() {
 
   return (
     <motion.form animate={controls} onSubmit={handleSubmit} className="space-y-6">
-      {/* Champ Téléphone */}
       <div>
-        <label className="block text-sm font-bold text-slate-700 mb-2">
-          Numéro de téléphone
-        </label>
-        <div className="relative group">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#0f9b58]">
+        <label className="mb-2 block text-sm font-bold text-slate-700">Numero de telephone</label>
+        <div className="group relative">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 group-focus-within:text-[#0f9b58]">
             <Phone size={18} />
           </div>
-          <div className="absolute inset-y-0 left-10 flex items-center pointer-events-none pr-2 border-r border-slate-200 h-2/3 my-auto">
-             <span className="text-sm font-bold text-slate-400 mr-2">🇨🇮 +225</span>
+          <div className="pointer-events-none absolute inset-y-0 left-10 my-auto flex h-2/3 items-center border-r border-slate-200 pr-2">
+            <span className="mr-2 text-sm font-bold text-slate-400">+225</span>
           </div>
           <input
             type="tel"
             value={form.phone}
-            maxLength={10} // Limite à 10 chiffres pour le format CI
-            onChange={(e) => setForm({...form, phone: e.target.value.replace(/\D/g, "")})} // Garde uniquement les chiffres
-            className="block w-full pl-28 pr-4 py-4 border border-slate-200 rounded-2xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-[#0f9b58]/20 focus:border-[#0f9b58] transition-all bg-slate-50/50"
-            placeholder="07 00 00 00 00"
+            maxLength={10}
+            onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, "") })}
+            className="block w-full rounded-2xl border border-slate-200 bg-slate-50/50 py-4 pl-24 pr-4 text-slate-900 placeholder-slate-400 transition-all focus:border-[#0f9b58] focus:ring-2 focus:ring-[#0f9b58]/20"
+            placeholder="0700000000"
           />
         </div>
-        <p className="mt-2 text-[10px] text-slate-400 italic">Entrez vos 10 chiffres habituels.</p>
       </div>
 
       <div>
-        <label className="block text-sm font-bold text-slate-700 mb-2">Code PIN</label>
-        <div className="relative group">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#0f9b58]">
+        <label className="mb-2 block text-sm font-bold text-slate-700">Code PIN</label>
+        <div className="group relative">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 group-focus-within:text-[#0f9b58]">
             <Lock size={18} />
           </div>
           <input
             type="password"
             inputMode="numeric"
+            maxLength={4}
             value={form.pin}
-            onChange={(e) => setForm({...form, pin: e.target.value})}
-            className="block w-full pl-11 pr-4 py-4 border border-slate-200 rounded-2xl text-slate-900 tracking-[0.5em] focus:ring-2 focus:ring-[#0f9b58]/20 focus:border-[#0f9b58] transition-all bg-slate-50/50"
-            placeholder="••••"
+            onChange={(e) => setForm({ ...form, pin: e.target.value.replace(/\D/g, "") })}
+            className="block w-full rounded-2xl border border-slate-200 bg-slate-50/50 py-4 pl-11 pr-4 tracking-[0.5em] text-slate-900 transition-all focus:border-[#0f9b58] focus:ring-2 focus:ring-[#0f9b58]/20"
+            placeholder="1234"
           />
         </div>
+        <p className="mt-2 text-xs text-slate-500">Entrez votre PIN a 4 chiffres.</p>
       </div>
 
       {errorMessage && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-100 text-red-700 text-sm"
+          className="flex items-center gap-3 rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-700"
         >
           <AlertCircle size={18} className="shrink-0" />
           {errorMessage}
@@ -168,7 +184,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={!isValid || isSubmitting}
-        className="w-full flex items-center justify-center rounded-2xl bg-[#0f9b58] py-4 text-sm font-bold text-white shadow-lg shadow-[#0f9b58]/20 transition-all hover:bg-[#0b7a45] active:scale-[0.98] disabled:opacity-50"
+        className="flex w-full items-center justify-center rounded-2xl bg-[#0f9b58] py-4 text-sm font-bold text-white shadow-lg shadow-[#0f9b58]/20 transition-all hover:bg-[#0b7a45] active:scale-[0.98] disabled:opacity-50"
       >
         {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : "Se connecter"}
       </button>

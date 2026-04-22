@@ -53,6 +53,7 @@ export function DriverDashboard({ affiliationCode = "", initialReferralCode = ""
       setState("no-session");
       return;
     }
+    const accessToken = token;
 
     let isActive = true;
 
@@ -71,12 +72,12 @@ export function DriverDashboard({ affiliationCode = "", initialReferralCode = ""
         }
 
         const [dashboardResponse, affiliationResponse, referralsResponse] = await Promise.all([
-          getDriverDashboard(token),
-          getDriverAffiliation(token).catch((err: any) => {
+          getDriverDashboard(accessToken),
+          getDriverAffiliation(accessToken).catch((err: any) => {
             setAffiliationError(err?.message ?? "Affiliation indisponible.");
             return { success: false, data: null };
           }),
-          getDriverReferralsSummary(token).catch((err: any) => {
+          getDriverReferralsSummary(accessToken).catch((err: any) => {
             setReferralsError(err?.message ?? "Filleuls indisponibles.");
             return { success: false, data: { invitationCount: 0, referredDrivers: [] } };
           }),

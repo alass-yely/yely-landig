@@ -16,29 +16,29 @@ export function HeroSection() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-[#0f9b58] mb-6">
+            {/* <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-[#0f9b58] mb-6">
               ✨ LANCEMENT PROCHAINEMENT - ABIDJAN
-            </div>
+            </div> */}
             <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-6xl">
-              Gagnez de l&apos;argent sur chaque <span className="text-[#0f9b58]">litre de carburant.</span>
+              Gagne <span className="text-[#0f9b58]">des bonus</span> quand tu prends du carburant 
             </h1>
             <p className="mt-6 text-lg leading-relaxed text-slate-600">
-              YELY est la première solution de tracking fuel qui transforme votre consommation en <strong>cashback réel</strong>. Pas de blabla, juste des litres tracés et de l&apos;argent récupéré.
+              À chaque passage à la pompe, tu récupères ton bonus automatiquement.
             </p>
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
               <Link
                 href="/chauffeur"
                 className="group flex items-center justify-center gap-2 rounded-full bg-[#0f9b58] px-8 py-4 text-sm font-bold text-white shadow-lg shadow-[#0f9b58]/20 transition-all hover:bg-[#0b7a45] hover:shadow-xl active:scale-95"
               >
-                Je suis chauffeur
+                Créer mon compte gratuit
                 <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
               </Link>
-              <Link
+              {/* <Link
                 href="/organisation"
                 className="flex items-center justify-center rounded-full border-2 border-slate-200 bg-white px-8 py-4 text-sm font-bold text-slate-700 transition-all hover:border-[#0f9b58] hover:text-[#0f9b58]"
               >
-                Je suis une organisation
-              </Link>
+                Inscrire mon organisation
+              </Link> */}
             </div>
           </motion.div>
 
@@ -70,7 +70,7 @@ export function HeroSection() {
                 </div>
                 <div className="flex flex-col">
                   <p className="text-[11px] font-black text-slate-800">Cashback Reçu ! ✨</p>
-                  <p className="text-[10px] text-slate-500 font-medium">+450 FCFA (Plein 45L)</p>
+                  <p className="text-[10px] text-slate-500 font-medium">+450 YELY Points (15L)</p>
                 </div>
               </motion.div>
 
@@ -99,7 +99,7 @@ export function HeroSection() {
                     >
                         18 450
                     </motion.h3>
-                    <span className="text-lg font-bold">FCFA</span>
+                    <span className="text-lg font-bold">YELY Points</span>
                 </div>
               </div>
 
@@ -118,7 +118,7 @@ export function HeroSection() {
                 <div className="bg-slate-50 p-3 rounded-2xl border-2 border-dashed border-[#0f9b58]/30 mb-3 relative z-10">
                   <QrCode size={120} className="text-slate-900" />
                 </div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Votre identifiant unique</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">QR CODE</p>
               </motion.div>
 
                 {/* DERNIÈRES TRANSACTIONS */}
@@ -132,9 +132,9 @@ export function HeroSection() {
                   
                   <div className="space-y-2">
                     {[
-                      { site: "Total Marcory", qty: "45L", gain: "+450", date: "Hier, 18:30" },
-                      { site: "Shell Plateau", qty: "30L", gain: "+300", date: "22 Oct, 10:15" },
-                      { site: "PretroCI Cocody", qty: "55L", gain: "+550", date: "21 Oct, 14:20" },
+                      { site: "Station Marcory", qty: "45L", gain: "+450", date: "Hier, 18:30" },
+                      { site: "Station Plateau", qty: "30L", gain: "+300", date: "22 Oct, 10:15" },
+                      { site: "Station Cocody", qty: "55L", gain: "+550", date: "21 Oct, 14:20" },
                     ].map((tx, i) => (
                       <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-100">
                         <div className="flex items-center gap-3">
@@ -146,7 +146,7 @@ export function HeroSection() {
                             <p className="text-[9px] text-slate-400 mt-1">{tx.date} • {tx.qty}</p>
                           </div>
                         </div>
-                        <span className="text-[11px] font-black text-[#0f9b58]">{tx.gain} F</span>
+                        <span className="text-[11px] font-black text-[#0f9b58]">{tx.gain} YP</span>
                       </div>
                     ))}
                   </div>

@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
+  getAccessToken,
   getDefaultRedirectPathByRole,
   getStoredUser,
-  isAuthenticated,
 } from "@/lib/utils/session";
 
 type AuthRedirectProps = {
@@ -18,13 +18,15 @@ export function AuthRedirect({ children }: AuthRedirectProps) {
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated()) {
+    const accessToken = getAccessToken();
+    const user = getStoredUser();
+
+    if (!accessToken || !user) {
       setChecked(true);
       return;
     }
 
-    const user = getStoredUser();
-    const path = getDefaultRedirectPathByRole(user?.role);
+    const path = getDefaultRedirectPathByRole(user.role);
 
     router.replace(path); // 👈 important: replace au lieu de push
   }, [router]);

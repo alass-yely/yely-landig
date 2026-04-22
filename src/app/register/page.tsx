@@ -28,11 +28,20 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
               Completez ce formulaire pour rejoindre la plateforme. Vous pouvez renseigner un code de parrainage si vous en avez un.
             </p>
 
+            {aff ? (
+              <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Invitation organisation</p>
+                <p className="mt-1 text-sm text-blue-900">
+                  Vous arrivez depuis un lien d&apos;organisation. Votre code d&apos;affiliation sera appliqué automatiquement après création de compte.
+                </p>
+              </div>
+            ) : null}
+
             <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5">
               <h2 className="text-sm font-semibold text-slate-900">A propos des codes</h2>
               <p className="mt-2 text-sm leading-7 text-slate-600">
                 Le code de parrainage est optionnel. Si vous arrivez depuis un lien avec un parametre ref, le champ est pre-rempli automatiquement.
-                Le parametre aff est conserve pour la suite du parcours, sans etre envoye a l&apos;inscription.
+                Si le parametre aff est present, le rattachement a l&apos;organisation est tente automatiquement apres l&apos;inscription.
               </p>
               <Link
                 href="/login"

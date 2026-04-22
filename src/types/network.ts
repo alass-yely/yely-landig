@@ -6,3 +6,11 @@ export type RequestStatus = {
   state: NetworkState;
   message?: string;
 };
+
+export type ApplyAffiliationPayload = {
+  affiliationCode: string;
+};
+
+export type AffiliationApplyResult = {
+  success: boolean;
+};

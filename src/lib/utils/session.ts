@@ -14,10 +14,29 @@ const ACCESS_TOKEN_KEY = "yely_access_token";
 const REFRESH_TOKEN_KEY = "yely_refresh_token";
 const USER_KEY = "yely_user";
 const ORGANIZATION_KEY = "yely_organization";
+export const SESSION_CHANGED_EVENT = "yely-session-changed";
+
+type StoredSessionPayload = {
+  accessToken: string;
+  refreshToken: string;
+  user: AuthUser;
+  organization?: AuthOrganization | null;
+};
+
+type SessionSnapshot = {
+  accessToken: string | null;
+  user: AuthUser | null;
+  organization: AuthOrganization | null;
+};
 
 export function getAccessToken() {
   if (typeof window === "undefined") return null;
   return window.localStorage.getItem(ACCESS_TOKEN_KEY);
+}
+
+export function notifySessionChanged() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(SESSION_CHANGED_EVENT));
 }
 
 export function getStoredUser(): AuthUser | null {
@@ -32,6 +51,10 @@ export function getStoredUser(): AuthUser | null {
   }
 }
 
+export function getStoredSessionUser(): AuthUser | null {
+  return getStoredUser();
+}
+
 export function getStoredOrganization(): AuthOrganization | null {
   if (typeof window === "undefined") return null;
   const raw = window.localStorage.getItem(ORGANIZATION_KEY);
@@ -44,8 +67,32 @@ export function getStoredOrganization(): AuthOrganization | null {
   }
 }
 
+export function getSessionSnapshot(): SessionSnapshot {
+  return {
+    accessToken: getAccessToken(),
+    user: getStoredUser(),
+    organization: getStoredOrganization(),
+  };
+}
+
 export function isAuthenticated() {
   return Boolean(getAccessToken() && getStoredUser());
+}
+
+export function setStoredSession(payload: StoredSessionPayload) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(ACCESS_TOKEN_KEY, payload.accessToken);
+  window.localStorage.setItem(REFRESH_TOKEN_KEY, payload.refreshToken);
+  window.localStorage.setItem(USER_KEY, JSON.stringify(payload.user));
+
+  if (payload.organization) {
+    window.localStorage.setItem(ORGANIZATION_KEY, JSON.stringify(payload.organization));
+  } else {
+    window.localStorage.removeItem(ORGANIZATION_KEY);
+  }
+
+  setSessionCookies(payload.user.role);
+  notifySessionChanged();
 }
 
 export function clearSession() {
@@ -55,6 +102,7 @@ export function clearSession() {
   window.localStorage.removeItem(USER_KEY);
   window.localStorage.removeItem(ORGANIZATION_KEY);
   clearSessionCookies();
+  notifySessionChanged();
 }
 
 export function getDefaultRedirectPathByRole(role?: string) {

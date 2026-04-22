@@ -1,13 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { BackofficeShell } from "@/components/backoffice/layout/backoffice-shell";
 import { OrganizationAffiliationCard } from "@/components/backoffice/organization/organization-affiliation-card";
 import { OrganizationDriversTable } from "@/components/backoffice/organization/organization-drivers-table";
-import { OrganizationManagersSection } from "@/components/backoffice/organization/organization-managers-section";
+// import { OrganizationManagersSection } from "@/components/backoffice/organization/organization-managers-section";
 import { OrganizationProfileSection } from "@/components/backoffice/organization/organization-profile-section";
 import { StateCard } from "@/components/backoffice/shared/state-card";
 import {
@@ -54,30 +53,26 @@ export default function OrganizationDashboardPage() {
   const [driversLoading, setDriversLoading] = useState(true);
   const [driversError, setDriversError] = useState<string | null>(null);
 
-  const [managers, setManagers] = useState<OrganizationManagerListItem[]>([]);
-  const [managersLoading, setManagersLoading] = useState(true);
-  const [managersError, setManagersError] = useState<string | null>(null);
+  // const [managers, setManagers] = useState<OrganizationManagerListItem[]>([]);
+  // const [managersLoading, setManagersLoading] = useState(true);
+  // const [managersError, setManagersError] = useState<string | null>(null);
 
   const [profile, setProfile] = useState<OrganizationProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState<string | null>(null);
 
   const reloadManagers = useCallback(async (accessToken: string) => {
-    setManagersLoading(true);
-    setManagersError(null);
+
 
     try {
       const response = await getOrganizationDashboardStaff(accessToken, { page: 1, pageSize: 20 });
       const payload = response.data as OrganizationManagerListItem[] | { items?: OrganizationManagerListItem[] };
-      setManagers(getListItems(payload));
     } catch (error) {
       if (error instanceof Error) {
-        setManagersError(error.message || "Impossible de charger les managers.");
       } else {
-        setManagersError("Impossible de charger les managers.");
       }
     } finally {
-      setManagersLoading(false);
+
     }
   }, []);
 
@@ -221,49 +216,70 @@ export default function OrganizationDashboardPage() {
 
   return (
     <BackofficeShell
-      title="Dashboard organisation"
-      subtitle="Suivez vos chauffeurs affiliés, gérez vos managers et mettez à jour votre profil en quelques actions."
+      title="Tableau de bord"
+      subtitle="Gestion centralisée de votre flotte et de vos collaborateurs."
     >
-      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        {overviewLoading ? (
-          <StateCard title="Affiliation" description="Chargement de votre code d'affiliation..." />
-        ) : overviewError ? (
-          <StateCard title="Affiliation" description={overviewError} tone="danger" />
-        ) : (
-          <OrganizationAffiliationCard affiliationCode={affiliationCode} />
-        )}
-
+      {/* 1. SECTION STATS / OVERVIEW (Nouveau) */}
+      <div className="grid gap-6 md:grid-cols-3 mb-8">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Actions rapides</p>
-          <h2 className="mt-2 text-lg font-semibold text-slate-900">Inviter un chauffeur</h2>
-          <p className="mt-2 text-sm text-slate-600">
-            Partagez votre code d&apos;affiliation ou dirigez un chauffeur vers le formulaire d&apos;inscription avec votre lien.
-          </p>
-          <Link
-            href={affiliationCode ? `/register?aff=${encodeURIComponent(affiliationCode)}` : "/register"}
-            className="mt-4 inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-          >
-            Ouvrir le formulaire chauffeur
-          </Link>
+          <p className="text-sm font-medium text-slate-500">Chauffeurs actifs</p>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-3xl font-bold text-slate-900">{drivers.length}</span>
+            <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+12%</span>
+          </div>
+        </div>
+        
+        {/* On déplace l'AffiliationCard ici pour qu'elle soit toujours visible mais compacte */}
+        <div className="md:col-span-2">
+           {overviewLoading ? (
+            <div className="h-full animate-pulse bg-slate-100 rounded-2xl border border-slate-200" />
+          ) : (
+            <OrganizationAffiliationCard affiliationCode={affiliationCode} />
+          )}
         </div>
       </div>
 
-      <OrganizationDriversTable drivers={drivers} loading={driversLoading} error={driversError} />
+      {/* 2. SECTION PRINCIPALE (TABLE) */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-[#0f9b58]" />
+            Liste des chauffeurs affiliés
+          </h2>
+          <button className="text-sm font-semibold text-[#0f9b58] hover:underline">
+            Exporter en CSV
+          </button>
+        </div>
+        
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <OrganizationDriversTable drivers={drivers} loading={driversLoading} error={driversError} />
+        </div>
+      </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <OrganizationManagersSection
-          managers={managers}
-          loading={managersLoading}
-          error={managersError}
-          onCreateManager={handleCreateManager}
-        />
+      {/* 3. SECTION SECONDAIRE (PROFIL & CONFIG) */}
+      <div className="mt-12 grid gap-8 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+             <OrganizationProfileSection
+                profile={profile}
+                loading={profileLoading}
+                error={profileError}
+                onUpdateProfile={handleUpdateProfile}
+              />
+          </div>
+        </div>
 
-        <OrganizationProfileSection
-          profile={profile}
-          loading={profileLoading}
-          error={profileError}
-          onUpdateProfile={handleUpdateProfile}
-        />
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-6">
+            <h3 className="font-bold text-blue-900 mb-2">Besoin d'aide ?</h3>
+            <p className="text-sm text-blue-700 leading-relaxed mb-4">
+              Votre affiliationCode est la clé pour rattacher vos chauffeurs. Partagez-le via WhatsApp ou Email.
+            </p>
+            <button className="text-sm font-bold text-blue-900 underline">
+              Consulter le guide manager
+            </button>
+          </div>
+        </div>
       </div>
     </BackofficeShell>
   );

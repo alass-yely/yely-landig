@@ -10,7 +10,7 @@ import { registerDriver } from "@/lib/api/auth";
 import { ApiClientError } from "@/lib/api/client";
 import { applyAffiliation } from "@/lib/api/network";
 import { normalizePhone } from "@/lib/utils/phone";
-import { setSessionCookies } from "@/lib/utils/session";
+import { setStoredSession } from "@/lib/utils/session";
 import { trackEvent } from "@/lib/utils/track";
 import type { RegisterDriverPayload } from "@/types/auth";
 
@@ -103,13 +103,11 @@ export function DriverRegisterForm({
       const response = await registerDriver(payload);
       const session = response.data;
 
-      try {
-        localStorage.setItem("yely_access_token", session.accessToken);
-        localStorage.setItem("yely_refresh_token", session.refreshToken);
-        localStorage.setItem("yely_user", JSON.stringify(session.user));
-      } catch {
-        // Ignore storage errors
-      }
+      setStoredSession({
+        accessToken: session.accessToken,
+        refreshToken: session.refreshToken,
+        user: session.user,
+      });
 
       const query = new URLSearchParams({
         firstName: session.user.firstName,
@@ -124,8 +122,6 @@ export function DriverRegisterForm({
         userId: session.user.id,
         referralCode: session.user.referralCode,
       });
-
-      setSessionCookies(session.user.role);
 
       if (affiliationCode.trim()) {
         try {

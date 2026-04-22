@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { registerOrganizationOwner } from "@/lib/api/auth";
 import { ApiClientError } from "@/lib/api/client";
 import { normalizePhone } from "@/lib/utils/phone";
-import { setSessionCookies } from "@/lib/utils/session";
+import { setStoredSession } from "@/lib/utils/session";
 import type { AuthOrganization, RegisterOrganizationOwnerPayload } from "@/types/auth";
 
 type FormState = {
@@ -183,16 +183,12 @@ export function OrganizationRegisterForm() {
       const response = await registerOrganizationOwner(payload);
       const session = response.data;
 
-      try {
-        localStorage.setItem("yely_access_token", session.accessToken);
-        localStorage.setItem("yely_refresh_token", session.refreshToken);
-        localStorage.setItem("yely_user", JSON.stringify(session.user));
-        localStorage.setItem("yely_organization", JSON.stringify(toStoredOrganization(session.organization)));
-      } catch {
-        // Ignore storage errors.
-      }
-
-      setSessionCookies(session.user.role);
+      setStoredSession({
+        accessToken: session.accessToken,
+        refreshToken: session.refreshToken,
+        user: session.user,
+        organization: toStoredOrganization(session.organization),
+      });
       const query = new URLSearchParams({ type: "organization" });
       router.push(`/success?${query.toString()}`);
     } catch (error) {

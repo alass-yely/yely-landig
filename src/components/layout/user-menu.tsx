@@ -18,13 +18,19 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
 
   const initials = user?.firstName?.[0]?.toUpperCase() ?? "Y";
   const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ");
-  
+  const role = user?.role;
+  const isOrganizationRole = role === "ORG_OWNER" || role === "ORG_MANAGER";
+
   const roleLabels: Record<string, string> = {
-    CHAUFFEUR: "Chauffeur Partenaire",
-    ORGANISATION: "Gestionnaire Organisation",
-    ADMIN: "Administrateur",
+    DRIVER: "Chauffeur Partenaire",
+    ORG_OWNER: "Proprietaire Organisation",
+    ORG_MANAGER: "Manager Organisation",
+    STATION_OWNER: "Proprietaire Station",
+    STATION_MANAGER: "Manager Station",
+    CASHIER: "Caissier Station",
+    YELY_ADMIN: "Administrateur YELY",
   };
-  const roleLabel = user?.role ? (roleLabels[user.role] || user.role) : "";
+  const roleLabel = role ? (roleLabels[role] || role) : "";
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -92,14 +98,16 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
             Mon espace
           </Link>
           
-          <Link
-            href="/"
-            onClick={handleNavigate}
-            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition-all hover:bg-slate-50 hover:text-[#0f9b58]"
-          >
-            <Home size={16} className="text-slate-400" />
-            Accueil
-          </Link>
+          {!isOrganizationRole && (
+            <Link
+              href="/"
+              onClick={handleNavigate}
+              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition-all hover:bg-slate-50 hover:text-[#0f9b58]"
+            >
+              <Home size={16} className="text-slate-400" />
+              Accueil
+            </Link>
+          )}
 
           <div className="my-2 h-px bg-slate-100" />
 

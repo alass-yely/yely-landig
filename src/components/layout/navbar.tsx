@@ -7,41 +7,57 @@ import { useRouter } from "next/navigation";
 import { Menu, X } from "lucide-react"; // Pense à installer lucide-react
 
 import { UserMenu } from "@/components/layout/user-menu";
-import { clearSession, getStoredUser, isAuthenticated } from "@/lib/utils/session";
+import { clearSession, getSessionSnapshot, SESSION_CHANGED_EVENT } from "@/lib/utils/session";
 import type { AuthUser } from "@/types/auth";
 
 export function Navbar() {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [hasAccessToken, setHasAccessToken] = useState(false);
   const [ready, setReady] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setUser(getStoredUser());
-    setReady(true);
-  }, []);
+    function syncSessionState() {
+      const snapshot = getSessionSnapshot();
+      setUser(snapshot.user);
+      setHasAccessToken(Boolean(snapshot.accessToken));
+    }
 
-  useEffect(() => {
-    const syncUser = () => setUser(getStoredUser());
-    window.addEventListener("storage", syncUser);
-    return () => window.removeEventListener("storage", syncUser);
+    syncSessionState();
+    setReady(true);
+
+    window.addEventListener(SESSION_CHANGED_EVENT, syncSessionState);
+    window.addEventListener("storage", syncSessionState);
+    return () => {
+      window.removeEventListener(SESSION_CHANGED_EVENT, syncSessionState);
+      window.removeEventListener("storage", syncSessionState);
+    };
   }, []);
 
   function handleLogout() {
     clearSession();
-    window.dispatchEvent(new Event("storage"));
     setUser(null);
+    setHasAccessToken(false);
     router.push("/");
     setIsOpen(false);
   }
 
-  const authed = ready && isAuthenticated();
+  const authed = ready && hasAccessToken && Boolean(user);
+  const role = user?.role;
+  const isOrganizationRole = role === "ORG_OWNER" || role === "ORG_MANAGER";
+  const isDriverRole = role === "DRIVER";
 
-  const navLinks = [
-    { href: "/chauffeur", label: "Chauffeur" },
-    { href: "/organisation", label: "Organisation" },
+  const publicNavLinks = [
+    { href: "/", label: "Accueil" },
+    { href: "/organisations", label: "organisation" },
   ];
+  const authenticatedNavLinks = isOrganizationRole
+    ? [{ href: "/organisation-dashboard", label: "Dashboard organisation" }]
+    : isDriverRole
+      ? [{ href: "/chauffeur", label: "Mon espace chauffeur" }]
+      : [{ href: "/", label: "Accueil" }];
+  const navLinks = authed ? authenticatedNavLinks : publicNavLinks;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-100 bg-white/80 backdrop-blur-md">
@@ -73,10 +89,16 @@ export function Navbar() {
                 Connexion
               </Link>
               <Link
+                href="/organisation"
+                className="rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-700 transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95"
+              >
+                Inscrire une organisation
+              </Link>
+              <Link
                 href="/register"
                 className="rounded-full bg-[#0f9b58] px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7a45] hover:shadow-md active:scale-95"
               >
-                Inscription
+                S&apos;inscrire chauffeur
               </Link>
             </div>
           )}
@@ -114,11 +136,18 @@ export function Navbar() {
                   Connexion
                 </Link>
                 <Link
+                  href="/organisation"
+                  onClick={() => setIsOpen(false)}
+                  className="w-full rounded-lg border border-slate-200 py-3 text-center font-semibold text-slate-700"
+                >
+                  Inscrire une organisation
+                </Link>
+                <Link
                   href="/register"
                   onClick={() => setIsOpen(false)}
                   className="w-full rounded-lg bg-[#0f9b58] py-3 text-center font-semibold text-white"
                 >
-                  Inscription
+                  S&apos;inscrire chauffeur
                 </Link>
               </div>
             )}

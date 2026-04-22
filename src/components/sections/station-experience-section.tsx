@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { QrCode, Zap, CheckCircle2, Fuel, ArrowRight, } from "lucide-react";
+import { QrCode, Zap, CheckCircle2, Fuel, ArrowRight, Wallet2 } from "lucide-react";
 import Link from "next/link";
 
 const flow = [
@@ -11,89 +11,102 @@ const flow = [
     icon: <Fuel size={24} />,
   },
   {
-    title: "Payer comme d’habitude",
-    desc: "Payez avec votre mobile money ou en espèces.",
-    icon: <Fuel size={24} />,
+    title: "Payer normalement",
+    desc: "Utilisez votre Mobile Money ou payez en espèces, comme toujours.",
+    icon: <Wallet2 size={24} />, // Icône ajoutée ici
   },
   {
     title: "Présentez votre QR",
-    desc: "Depuis l'application YELY.",
+    desc: "Ouvrez l'application YELY et montrez votre QR code.",
     icon: <QrCode size={24} />,
   },
   {
     title: "Scan instantané",
-    desc: "Le pompiste scanne et valide les litres en moins de 3 secondes et tu gagnes des bonus automatiquement, versés instantanément sur ton compte YELY",
+    desc: "Le pompiste scanne en 3s. Vos bonus sont versés immédiatement sur votre compte YELY.",
     icon: <Zap size={24} />,
   },
   {
     title: "Gain validé",
-    desc: "Vous pouvez utiliser vos bonus quand vous le voulez.",
+    desc: "Utilisez vos bonus cumulés quand vous le souhaitez.",
     icon: <CheckCircle2 size={24} />,
   },
 ];
 
 export function StationExperience() {
   return (
-    <section className="py-20 bg-slate-50">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-base font-bold uppercase tracking-wider text-[#0f9b58]">Comment ça marche ?</h2>
-          <p className="mt-2 text-3xl font-extrabold text-slate-900 sm:text-4xl">
-            Zéro attente, 100% de gains
-          </p>
-          <p className="mt-4 text-slate-600 max-w-2xl mx-auto">
+    <section className="py-24 bg-white overflow-hidden">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="text-center mb-20">
+          <span className="text-[11px] font-black uppercase tracking-[0.3em] text-[#0f9b58] bg-emerald-50 px-4 py-2 rounded-full">
+            Comment ça marche ?
+          </span>
+          <h2 className="mt-6 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+            Zéro attente, <span className="text-[#0f9b58]">100% de gains</span>
+          </h2>
+          <p className="mt-6 text-lg leading-8 text-slate-600 max-w-2xl mx-auto">
             Ce n’est pas un nouveau partenaire, ce n’est pas du Mobile Money. Tu ne changes pas tes habitudes, tu gagnes simplement des bonus en plus
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
-          {flow.map((item, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className="relative p-8 rounded-3xl bg-white border border-slate-100 shadow-sm flex flex-col items-center text-center"
-            >
-              {/* Connecteur entre les étapes (Desktop) */}
-              {index < flow.length - 1 && (
-                <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-0.5 bg-slate-100 z-0" />
-              )}
-              
-              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-[#0f9b58] shadow-inner">
-                {item.icon}
-              </div>
-              
-              <h3 className="text-lg font-bold text-slate-900 mb-2">{item.title}</h3>
-              <p className="text-sm leading-relaxed text-slate-500">
-                {item.desc}
-              </p>
-            </motion.div>
-          ))}
+        {/* Timeline Flow */}
+        <div className="relative">
+          {/* Ligne de connexion (Desktop uniquement) */}
+          <div className="hidden lg:block absolute top-12 left-[10%] right-[10%] h-0.5 bg-slate-100" />
+
+          <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-5">
+            {flow.map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.15, duration: 0.5 }}
+                className="relative flex flex-col items-center text-center group"
+              >
+                {/* Numéro de l'étape */}
+                <span className="absolute -top-4 text-6xl font-black text-slate-50 opacity-[0.03] select-none">
+                  0{index + 1}
+                </span>
+
+                <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-white border border-slate-100 shadow-xl shadow-slate-200/50 text-[#0f9b58] group-hover:scale-110 group-hover:bg-[#0f9b58] group-hover:text-white transition-all duration-300 z-10">
+                  {item.icon}
+                </div>
+                
+                <h3 className="text-md font-bold text-slate-900 mb-3">{item.title}</h3>
+                <p className="text-[13px] leading-relaxed text-slate-500 px-2">
+                  {item.desc}
+                </p>
+              </motion.div>
+            ))}
+          </div>
         </div>
 
-        {/* Note de rassurance */}
-        <motion.div 
-        initial={{ opacity: 0, y: 10 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="mt-16 flex justify-center"
-      >
-        <Link
-          href="/register?role=chauffeur"
-          className="group flex items-center gap-3 rounded-full bg-[#0f9b58] px-10 py-4 text-base font-bold text-white shadow-lg shadow-[#0f9b58]/20 transition-all hover:bg-[#0b7a45] hover:shadow-xl active:scale-95"
-        >
-          Commencer à gagner des bonus
-          <ArrowRight size={20} className="transition-transform group-hover:translate-x-1" />
-        </Link>
-      </motion.div>
-        {/* <div className="mt-12 flex justify-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 text-white text-xs font-medium">
-            <span className="h-2 w-2 rounded-full bg-[#0f9b58] animate-pulse" />
-            Compatible avec toutes nos stations partenaires à Abidjan et à l&apos;intérieur.
+        {/* CTA et Note de rassurance */}
+        <div className="mt-24 flex flex-col items-center gap-8">
+          <motion.div 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Link
+              href="/register?role=chauffeur"
+              className="group flex items-center gap-3 rounded-full bg-slate-900 px-10 py-5 text-base font-bold text-white shadow-2xl transition-all hover:bg-black"
+            >
+              Commencer à gagner des bonus
+              <ArrowRight size={20} className="text-[#0f9b58] transition-transform group-hover:translate-x-1" />
+            </Link>
+          </motion.div>
+
+          <div className="flex items-center gap-3 px-6 py-3 rounded-full border border-slate-100 bg-slate-50/50">
+            <div className="flex -space-x-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-6 w-6 rounded-full bg-slate-200 border-2 border-white" />
+              ))}
+            </div>
+            <p className="text-[12px] font-medium text-slate-600">
+              Déjà <span className="font-bold text-slate-900">+500 chauffeurs</span> à Abidjan
+            </p>
           </div>
-        </div> */}
+        </div>
       </div>
     </section>
   );

@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import { motion } from "framer-motion";
+import { QRCodeSVG } from "qrcode.react";
 import { 
-  QrCode, Wallet, Fuel, Users2, Building2, Receipt, MessageCircle,
+  Wallet, Fuel, Users2, Building2, Receipt, MessageCircle,
 } from "lucide-react";
 import { useAffiliationPreview } from "@/hooks/use-affiliation-preview";
 import { ShareActions } from "@/components/success/share-actions";
@@ -169,6 +170,7 @@ export function DriverDashboard({ affiliationCode = "", initialReferralCode = ""
   const transactions = (dashboard.recentTransactions ?? []).slice(0, 10);
   const referralCode = storedUser?.referralCode || initialReferralCode;
   const whatsappCommunityUrl = env.whatsappCommunityUrl;
+  const qrToken = dashboard.qr?.token?.trim() ?? "";
 
 
   const hasAffiliation = Boolean(affiliation?.organization?.name);
@@ -224,13 +226,13 @@ export function DriverDashboard({ affiliationCode = "", initialReferralCode = ""
         className="relative overflow-hidden rounded-4xl bg-linear-to-br from-[#0f9b58] to-[#0b7a45] p-6 text-white shadow-xl"
       >
         <div className="relative z-10">
-          <div className="flex items-center gap-2 opacity-80 text-[10px] font-black uppercase tracking-widest">
+          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-emerald-100">
             <Wallet size={14} /> Solde cumulé
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <h3 className="text-4xl font-black">{formatAmount(dashboard.cashback?.totalCashbackAmount ?? 0)}</h3>
           </div>
-          <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold">
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-xs font-bold">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
             {dashboard.cashback?.entryCount ?? 0} Pleins enregistrés
           </div>
@@ -239,11 +241,11 @@ export function DriverDashboard({ affiliationCode = "", initialReferralCode = ""
       </motion.div>
 
       <div className="rounded-4xl bg-white border border-slate-100 p-6 shadow-sm flex flex-col justify-center">
-        <div className="flex items-center gap-2 text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">
+        <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-500">
           <Fuel size={14} /> Volume Total
         </div>
         <h3 className="text-3xl font-black text-slate-900">{formatLiters(dashboard.cashback?.totalLiters ?? 0)}</h3>
-        <p className="text-xs text-slate-500 mt-1">Consommation tracée sur YELY</p>
+        <p className="mt-1 text-sm text-slate-600">Consommation tracée sur YELY</p>
       </div>
     </div>
 
@@ -272,7 +274,7 @@ export function DriverDashboard({ affiliationCode = "", initialReferralCode = ""
                     </div>
                     <div>
                       <p className="text-sm font-bold text-slate-900">{tx.station?.name ?? "Station"}</p>
-                      <p className="text-[10px] text-slate-400">{tx.confirmedAt ? new Date(tx.confirmedAt).toLocaleDateString() : "En cours"}</p>
+                      <p className="text-xs text-slate-500">{tx.confirmedAt ? new Date(tx.confirmedAt).toLocaleDateString() : "En cours"}</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -292,11 +294,11 @@ export function DriverDashboard({ affiliationCode = "", initialReferralCode = ""
           </div>
           <div className="grid grid-cols-2 gap-4 mb-6">
              <div className="bg-white p-4 rounded-2xl shadow-sm border border-emerald-100">
-                <p className="text-[10px] font-bold text-slate-400 uppercase">Filleuls</p>
+                <p className="text-xs font-bold uppercase text-slate-500">Filleuls</p>
                 <p className="text-2xl font-black text-slate-900">{referralCount}</p>
              </div>
              <div className="bg-[#0f9b58] p-4 rounded-2xl shadow-md text-white">
-                <p className="text-[10px] font-bold opacity-80 uppercase tracking-tighter">Code Promo</p>
+                <p className="text-xs font-bold uppercase tracking-tight text-emerald-100">Code Promo</p>
                 <p className="text-lg font-black">{referralCode || "---"}</p>
              </div>
           </div>
@@ -308,15 +310,18 @@ export function DriverDashboard({ affiliationCode = "", initialReferralCode = ""
       <div className="space-y-6">
         {/* QR Code Card */}
         <div className="rounded-[2.5rem] bg-slate-900 p-8 text-center text-white shadow-xl shadow-slate-200">
-           <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-60 mb-6">Identifiant QR</p>
+           <p className="mb-6 text-xs font-bold uppercase tracking-[0.2em] text-slate-300">Identifiant QR</p>
            <div className="mx-auto flex h-48 w-48 items-center justify-center rounded-3xl bg-white p-4">
-             {/* Simuler le QR ou insérer le composant QR réel */}
-             <QrCode size={140} className="text-slate-900" />
+             {qrToken ? (
+               <QRCodeSVG value={qrToken} size={160} level="M" includeMargin />
+             ) : (
+               <p className="px-3 text-sm font-semibold text-slate-500">QR indisponible</p>
+             )}
            </div>
-           <div className="mt-6 px-4 py-2 bg-white/10 rounded-full text-[11px] font-mono tracking-widest truncate">
-             {dashboard.qr?.token ?? "PAS DE TOKEN"}
+           <div className="mt-6 rounded-full bg-white/10 px-4 py-2 text-xs font-mono tracking-widest text-slate-200 truncate">
+             {qrToken || "PAS DE TOKEN"}
            </div>
-           <p className="mt-6 text-[11px] text-slate-400 leading-relaxed">
+           <p className="mt-6 text-sm leading-relaxed text-slate-300">
              À présenter au pompiste pour <br/> accumuler vos litres.
            </p>
         </div>
@@ -329,8 +334,8 @@ export function DriverDashboard({ affiliationCode = "", initialReferralCode = ""
            
            {hasAffiliation ? (
              <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl">
-               <p className="text-xs font-bold text-blue-700">{affiliation?.organization?.name}</p>
-               <p className="text-[10px] text-blue-500 mt-1 uppercase">Rattaché • {affiliation?.status}</p>
+               <p className="text-sm font-bold text-blue-700">{affiliation?.organization?.name}</p>
+               <p className="mt-1 text-xs uppercase text-blue-600">Rattaché • {affiliation?.status}</p>
              </div>
            ) : (
              <div className="space-y-3">
@@ -338,27 +343,27 @@ export function DriverDashboard({ affiliationCode = "", initialReferralCode = ""
                   type="text"
                   value={affiliationCodeInput}
                   onChange={(e) => setAffiliationCodeInput(e.target.value.toUpperCase())}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
                   placeholder="Code Organisation (ex: ORG-123)"
                 />
                 {preview.loading && trimmedAffiliationCodeInput.length > 0 && (
-                  <p className="text-[10px] font-medium text-slate-500">Vérification du code...</p>
+                  <p className="text-xs font-medium text-slate-600">Vérification du code...</p>
                 )}
                 {preview.valid && (
-                  <p className="text-[10px] font-bold text-emerald-600 italic">✓ {preview.organization?.name}</p>
+                  <p className="text-xs font-bold text-emerald-600 italic">✓ {preview.organization?.name}</p>
                 )}
                 {isAffiliationPreviewInvalid && (
-                  <p className="text-[10px] font-medium text-amber-700">Code d&apos;affiliation invalide.</p>
+                  <p className="text-xs font-medium text-amber-700">Code d&apos;affiliation invalide.</p>
                 )}
                 <button
                   onClick={handleApplyAffiliation}
                   disabled={isJoinAffiliationDisabled}
-                  className="w-full rounded-xl bg-slate-900 py-2.5 text-xs font-bold text-white transition hover:bg-slate-800 disabled:opacity-50"
+                  className="w-full rounded-xl bg-slate-900 py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:opacity-50"
                 >
                   {affiliationState === "loading" ? "Chargement..." : "Rejoindre la flotte"}
                 </button>
                 {affiliationError && (
-                  <p className="text-[10px] font-medium text-red-600">{affiliationError}</p>
+                  <p className="text-xs font-medium text-red-600">{affiliationError}</p>
                 )}
              </div>
            )}

@@ -9,21 +9,13 @@ import { login } from "@/lib/api/auth";
 import { ApiClientError } from "@/lib/api/client";
 import { getPostLoginRedirectPath } from "@/lib/utils/auth-redirect";
 import { normalizePhone } from "@/lib/utils/phone";
-import { setSessionCookies } from "@/lib/utils/session";
+import { setStoredSession } from "@/lib/utils/session";
 import { trackEvent } from "@/lib/utils/track";
-import type { LoginPayload } from "@/types/auth";
+import type { AuthOrganization, LoginPayload } from "@/types/auth";
 
 const PIN_REGEX = /^\d{4}$/;
 
-type StoredOrganization = {
-  id: string;
-  name: string;
-  rccm: string;
-  affiliationCode?: string;
-  vehicleCount?: number;
-};
-
-function isStoredOrganization(value: unknown): value is StoredOrganization {
+function isStoredOrganization(value: unknown): value is AuthOrganization {
   if (!value || typeof value !== "object") return false;
 
   const candidate = value as Record<string, unknown>;
@@ -91,24 +83,19 @@ export function LoginForm() {
       const response = await login(payload);
       const session = response.data;
 
-      localStorage.setItem("yely_access_token", session.accessToken);
-      localStorage.setItem("yely_refresh_token", session.refreshToken);
-      try {
-        localStorage.setItem("yely_user", JSON.stringify(session.user));
-        const maybeOrganization = (session as { organization?: unknown }).organization;
-        if (isStoredOrganization(maybeOrganization)) {
-          localStorage.setItem("yely_organization", JSON.stringify(maybeOrganization));
-        }
-      } catch {
-        // Ignore JSON serialization errors for user data.
-      }
+      const maybeOrganization = (session as { organization?: unknown }).organization;
+      setStoredSession({
+        accessToken: session.accessToken,
+        refreshToken: session.refreshToken,
+        user: session.user,
+        organization: isStoredOrganization(maybeOrganization) ? maybeOrganization : null,
+      });
 
       trackEvent("login_success", {
         userId: session.user.id,
         role: session.user.role,
       });
 
-      setSessionCookies(session.user.role);
       const nextPath = searchParams.get("next");
       const redirectPath = isSafeInternalNextPath(nextPath)
         ? nextPath
